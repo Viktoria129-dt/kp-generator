@@ -168,8 +168,7 @@ export default function Home() {
           <div className="divider" /><div className="step"><span>3</span><div><h2>Таблица</h2><p>Excel, CSV или копирование прямо из таблицы.</p></div></div>
           <input ref={tableInput} hidden type="file" accept=".xlsx,.xls,.csv" onChange={importSpreadsheet} /><div className="buttonRow"><button className="secondary" onClick={() => tableInput.current?.click()}>Загрузить Excel / CSV</button><button className="secondary" onClick={() => setPasteOpen((v) => !v)}>Вставить из буфера</button></div>
           {pasteOpen && <div className="pasteBox"><textarea autoFocus placeholder="Скопируйте ячейки в Excel и вставьте сюда" value={pasteValue} onChange={(e) => setPasteValue(e.target.value)} /><button className="smallPrimary" onClick={applyPastedTable}>Применить</button></div>}
-          <div className="divider" /><div className="step"><span>4</span><div><h2>Итог и подпись</h2><p>Сумма и НДС рассчитываются из столбца «Сумма».</p></div></div>
-          <div className="calculation"><span>Итого автоматически</span><strong>{formatMoney(calculation.totalValue)} ₽</strong><small>в том числе НДС 22%: {formatMoney(calculation.vat)} ₽</small></div>
+          <div className="divider" /><div className="step"><span>4</span><div><h2>Условия и подпись</h2><p>Укажите условия доставки и данные для подписи.</p></div></div>
           <label>Условия доставки<textarea value={delivery} onChange={(e) => setDelivery(e.target.value)} /></label>
           <div className="twoCols"><label>Должность<input value={directorTitle} onChange={(e) => setDirectorTitle(e.target.value)} /></label><label>ФИО директора<input value={directorName} readOnly aria-readonly="true" /></label></div>
         </aside>
