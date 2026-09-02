@@ -190,7 +190,7 @@ export default function Home() {
         <aside className="panel controls">
           <div className="step"><h2>Бланк</h2></div>
           <input ref={templateInput} hidden type="file" accept=".docx" onChange={(e) => { setTemplate(e.target.files?.[0] ?? null); setStatus(e.target.files?.[0] ? `Бланк выбран: ${e.target.files[0].name}` : ""); }} />
-          <div className="buttonRow"><button className="secondary" onClick={() => templateInput.current?.click()}>{template ? "Заменить бланк" : "Загрузить бланк"}</button>{template && <button className="textButton" onClick={() => { setTemplate(null); if (templateInput.current) templateInput.current.value = ""; }}>Удалить бланк</button>}</div>
+          <div className="buttonRow fullWidthActions"><button className="secondary" onClick={() => templateInput.current?.click()}>{template ? "Заменить бланк" : "Загрузить бланк"}</button>{template && <button className="textButton" onClick={() => { setTemplate(null); if (templateInput.current) templateInput.current.value = ""; }}>Удалить бланк</button>}</div>
           <div className="divider" /><div className="step"><h2>Реквизиты</h2></div>
           <label>Исходящий номер<input value={number} onChange={(e) => setNumber(e.target.value)} /></label><div className="twoCols"><label>Дата<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label><label>Город<input value={city} onChange={(e) => setCity(e.target.value)} /></label></div><label>Заголовок<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className="checkRow"><input type="checkbox" checked={includeObject} onChange={(e) => setIncludeObject(e.target.checked)} /><span>Добавить название объекта</span></label>
@@ -204,9 +204,8 @@ export default function Home() {
           <div className="divider" />
           <div className="stampSection">
             <div className="step"><h2>Печать</h2></div>
-            <div className="stampCard"><div><strong>{stamp ? stamp.name : "Печать не загружена"}</strong><span>{stamp ? "Печать будет добавлена в документ" : "Документ сформируется без печати"}</span></div></div>
           <input ref={stampInput} hidden type="file" accept="image/png,image/jpeg" onChange={(e) => { const file = e.target.files?.[0] ?? null; setStamp(file); setStatus(file ? `Печать выбрана: ${file.name}` : ""); }} />
-          <div className="buttonRow"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Печать удалена"); }}>Удалить печать</button>}</div>
+          <div className="buttonRow fullWidthActions"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Печать удалена"); }}>Удалить печать</button>}</div>
           </div>
         </aside>
         <section className="panel previewPanel"><div className="previewHeader"><div><h2>Предпросмотр таблицы</h2><p>{rows.length} строк · {columns} столбцов</p></div><span className="editable">Можно редактировать</span></div><div className="tableWrap"><table><tbody>{rows.map((row, ri) => <tr key={ri}>{Array.from({ length: columns }, (_, ci) => <td key={ci} className={ri === 0 ? "headingCell" : ""}><input aria-label={`Строка ${ri + 1}, столбец ${ci + 1}`} value={String(row[ci] ?? "")} onChange={(e) => updateCell(ri, ci, e.target.value)} /></td>)}</tr>)}</tbody></table></div></section>
