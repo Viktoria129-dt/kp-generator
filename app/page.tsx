@@ -205,7 +205,6 @@ export default function Home() {
         </aside>
         <section className="panel previewPanel"><div className="previewHeader"><div><h2>Предпросмотр таблицы</h2><p>{rows.length} строк · {columns} столбцов</p></div><span className="editable">Можно редактировать</span></div><div className="tableWrap"><table><tbody>{rows.map((row, ri) => <tr key={ri}>{Array.from({ length: columns }, (_, ci) => <td key={ci} className={ri === 0 ? "headingCell" : ""}><input aria-label={`Строка ${ri + 1}, столбец ${ci + 1}`} value={String(row[ci] ?? "")} onChange={(e) => updateCell(ri, ci, e.target.value)} /></td>)}</tr>)}</tbody></table></div><div className="tableActions"><button className="textButton" onClick={() => setRows((r) => [...r, Array(columns).fill("")])}>+ Добавить строку</button><button className="textButton danger" disabled={rows.length <= 1} onClick={() => setRows((r) => r.slice(0, -1))}>Удалить последнюю</button></div></section>
       </div>
-      <footer className="actionbar"><span className={status.includes("Не удалось") ? "error" : ""}>{status || "Документ ещё не сформирован"}</span><button className="primary" onClick={generateDocument}>Сформировать и скачать .docx</button></footer>
     </section>
   </main>;
 }
