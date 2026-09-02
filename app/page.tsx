@@ -188,22 +188,22 @@ export default function Home() {
       <div className="intro"><div><h1>Соберите КП за пару минут</h1><p>Заполните реквизиты, добавьте таблицу и скачайте готовый Word с фирменной шапкой и подвалом.</p></div><button className="primary" onClick={generateDocument}>Сформировать Word</button></div>
       <div className="grid">
         <aside className="panel controls">
-          <div className="step"><span>1</span><div><h2>Бланк</h2></div></div>
+          <div className="step"><h2>Бланк</h2></div>
           <input ref={templateInput} hidden type="file" accept=".docx" onChange={(e) => { setTemplate(e.target.files?.[0] ?? null); setStatus(e.target.files?.[0] ? `Бланк выбран: ${e.target.files[0].name}` : ""); }} />
           <div className="buttonRow"><button className="secondary" onClick={() => templateInput.current?.click()}>{template ? "Заменить бланк" : "Загрузить бланк"}</button>{template && <button className="textButton" onClick={() => { setTemplate(null); if (templateInput.current) templateInput.current.value = ""; }}>Удалить бланк</button>}</div>
-          <div className="divider" /><div className="step"><span>2</span><div><h2>Реквизиты</h2></div></div>
+          <div className="divider" /><div className="step"><h2>Реквизиты</h2></div>
           <label>Исходящий номер<input value={number} onChange={(e) => setNumber(e.target.value)} /></label><div className="twoCols"><label>Дата<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label><label>Город<input value={city} onChange={(e) => setCity(e.target.value)} /></label></div><label>Заголовок<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className="checkRow"><input type="checkbox" checked={includeObject} onChange={(e) => setIncludeObject(e.target.checked)} /><span>Добавить название объекта</span></label>
           {includeObject && <label>Название объекта<input value={objectName} onChange={(e) => setObjectName(e.target.value)} placeholder="Например: БЦ «Омега», корпус 2" /></label>}
-          <div className="divider" /><div className="step"><span>3</span><div><h2>Таблица</h2></div></div>
+          <div className="divider" /><div className="step"><h2>Таблица</h2></div>
           <input ref={tableInput} hidden type="file" accept=".xlsx,.xls,.csv" onChange={importSpreadsheet} /><div className="buttonRow"><button className="secondary" onClick={() => tableInput.current?.click()}>Загрузить Excel / CSV</button><button className="secondary" onClick={() => setPasteOpen((v) => !v)}>Вставить из буфера</button></div>
           {pasteOpen && <div className="pasteBox"><textarea autoFocus placeholder="Скопируйте ячейки в Excel и вставьте сюда" value={pasteValue} onChange={(e) => setPasteValue(e.target.value)} /><button className="smallPrimary" onClick={applyPastedTable}>Применить</button></div>}
-          <div className="divider" /><div className="step"><span>4</span><div><h2>Условия и подпись</h2></div></div>
+          <div className="divider" /><div className="step"><h2>Условия и подпись</h2></div>
           <label>Условия доставки<textarea value={delivery} onChange={(e) => setDelivery(e.target.value)} /></label>
           <div className="twoCols"><label>Должность<input value={directorTitle} onChange={(e) => setDirectorTitle(e.target.value)} /></label><label>ФИО директора<input value={directorName} onChange={(e) => setDirectorName(e.target.value)} /></label></div>
           <div className="divider" />
           <div className="stampSection">
-            <div className="step"><span>5</span><div><h2>Печать</h2></div></div>
+            <div className="step"><h2>Печать</h2></div>
             <div className="stampCard"><div><strong>{stamp ? stamp.name : "Печать не загружена"}</strong><span>{stamp ? "Печать будет добавлена в документ" : "Документ сформируется без печати"}</span></div></div>
           <input ref={stampInput} hidden type="file" accept="image/png,image/jpeg" onChange={(e) => { const file = e.target.files?.[0] ?? null; setStamp(file); setStatus(file ? `Печать выбрана: ${file.name}` : ""); }} />
           <div className="buttonRow"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Печать удалена"); }}>Удалить печать</button>}</div>
