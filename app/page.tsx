@@ -53,6 +53,29 @@ function integerToWords(value: number) {
 function formatMoney(value: number) { return value.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replaceAll(" ", " "); }
 function moneyInWords(value: number) { const rubles = Math.floor(value); const kopecks = Math.round((value - rubles) * 100); const words = integerToWords(rubles); return `${words.charAt(0).toUpperCase()}${words.slice(1)} ${plural(rubles, ["рубль", "рубля", "рублей"])} ${String(kopecks).padStart(2, "0")} ${plural(kopecks, ["копейка", "копейки", "копеек"])}`; }
 
+async function imageToPng(file: File): Promise<ArrayBuffer> {
+  const image = new Image();
+  const url = URL.createObjectURL(file);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("Не удалось прочитать изображение печати"));
+      image.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Не удалось подготовить изображение печати");
+    context.drawImage(image, 0, 0);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error("Не удалось преобразовать печать в PNG");
+    return blob.arrayBuffer();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function tableXml(rows: Cell[][]) {
   const columns = Math.max(...rows.map((row) => row.length), 1);
   const totalWidth = 9360;
@@ -94,7 +117,8 @@ export default function Home() {
   const [objectName, setObjectName] = useState("");
   const [delivery, setDelivery] = useState("Доставка до города Омск входит в стоимость светильников и осуществляется Поставщиком.");
   const [directorTitle, setDirectorTitle] = useState("Генеральный директор");
-  const directorName = "Матыцин А. Ю.";
+  const [directorName, setDirectorName] = useState("Матыцин А. Ю.");
+  const [stamp, setStamp] = useState<File | null>(null);
   const [rows, setRows] = useState<Cell[][]>(sample);
   const [template, setTemplate] = useState<File | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -102,6 +126,7 @@ export default function Home() {
   const [status, setStatus] = useState("");
   const tableInput = useRef<HTMLInputElement>(null);
   const templateInput = useRef<HTMLInputElement>(null);
+  const stampInput = useRef<HTMLInputElement>(null);
   const formattedDate = useMemo(() => { if (!date) return ""; const [year, month, day] = date.split("-"); return `${day}.${month}.${year}`; }, [date]);
   const calculation = useMemo(() => {
     const header = rows[0] ?? [];
@@ -131,7 +156,7 @@ export default function Home() {
       setStatus("Формируем документ…");
       const templateBuffer = template ? await template.arrayBuffer() : await fetch("/kp-template.docx").then((response) => { if (!response.ok) throw new Error("Не удалось загрузить встроенный бланк"); return response.arrayBuffer(); });
       const zip = new PizZip(templateBuffer);
-      const stampBuffer = await fetch("/stamp.png").then((response) => { if (!response.ok) throw new Error("Не удалось загрузить печать"); return response.arrayBuffer(); });
+      const stampBuffer = stamp ? await imageToPng(stamp) : await fetch("/stamp.png").then((response) => { if (!response.ok) throw new Error("Не удалось загрузить печать"); return response.arrayBuffer(); });
       zip.file("word/media/stamp.png", stampBuffer);
       const relsFile = zip.file("word/_rels/document.xml.rels");
       if (!relsFile) throw new Error("В бланке не найдены связи документа");
@@ -170,7 +195,9 @@ export default function Home() {
           {pasteOpen && <div className="pasteBox"><textarea autoFocus placeholder="Скопируйте ячейки в Excel и вставьте сюда" value={pasteValue} onChange={(e) => setPasteValue(e.target.value)} /><button className="smallPrimary" onClick={applyPastedTable}>Применить</button></div>}
           <div className="divider" /><div className="step"><span>4</span><div><h2>Условия и подпись</h2><p>Укажите условия доставки и данные для подписи.</p></div></div>
           <label>Условия доставки<textarea value={delivery} onChange={(e) => setDelivery(e.target.value)} /></label>
-          <div className="twoCols"><label>Должность<input value={directorTitle} onChange={(e) => setDirectorTitle(e.target.value)} /></label><label>ФИО директора<input value={directorName} readOnly aria-readonly="true" /></label></div>
+          <div className="twoCols"><label>Должность<input value={directorTitle} onChange={(e) => setDirectorTitle(e.target.value)} /></label><label>ФИО директора<input value={directorName} onChange={(e) => setDirectorName(e.target.value)} /></label></div>
+          <input ref={stampInput} hidden type="file" accept="image/png,image/jpeg" onChange={(e) => { const file = e.target.files?.[0] ?? null; setStamp(file); setStatus(file ? `Печать выбрана: ${file.name}` : ""); }} />
+          <div className="buttonRow"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить свою печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Возвращена печать по умолчанию"); }}>Вернуть печать по умолчанию</button>}</div>
         </aside>
         <section className="panel previewPanel"><div className="previewHeader"><div><h2>Предпросмотр таблицы</h2><p>{rows.length} строк · {columns} столбцов</p></div><span className="editable">Можно редактировать</span></div><div className="tableWrap"><table><tbody>{rows.map((row, ri) => <tr key={ri}>{Array.from({ length: columns }, (_, ci) => <td key={ci} className={ri === 0 ? "headingCell" : ""}><input aria-label={`Строка ${ri + 1}, столбец ${ci + 1}`} value={String(row[ci] ?? "")} onChange={(e) => updateCell(ri, ci, e.target.value)} /></td>)}</tr>)}</tbody></table></div><div className="tableActions"><button className="textButton" onClick={() => setRows((r) => [...r, Array(columns).fill("")])}>+ Добавить строку</button><button className="textButton danger" disabled={rows.length <= 1} onClick={() => setRows((r) => r.slice(0, -1))}>Удалить последнюю</button></div></section>
       </div>
