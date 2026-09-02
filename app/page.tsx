@@ -196,8 +196,13 @@ export default function Home() {
           <div className="divider" /><div className="step"><span>4</span><div><h2>Условия и подпись</h2><p>Укажите условия доставки и данные для подписи.</p></div></div>
           <label>Условия доставки<textarea value={delivery} onChange={(e) => setDelivery(e.target.value)} /></label>
           <div className="twoCols"><label>Должность<input value={directorTitle} onChange={(e) => setDirectorTitle(e.target.value)} /></label><label>ФИО директора<input value={directorName} onChange={(e) => setDirectorName(e.target.value)} /></label></div>
+          <div className="divider" />
+          <div className="stampSection">
+            <div className="step"><span>5</span><div><h2>Печать</h2><p>Загрузите печать организации для итогового Word-документа.</p></div></div>
+            <div className="stampCard"><div><strong>{stamp ? stamp.name : "Стандартная печать"}</strong><span>{stamp ? "Своя печать выбрана" : "Используется печать по умолчанию"}</span></div></div>
           <input ref={stampInput} hidden type="file" accept="image/png,image/jpeg" onChange={(e) => { const file = e.target.files?.[0] ?? null; setStamp(file); setStatus(file ? `Печать выбрана: ${file.name}` : ""); }} />
           <div className="buttonRow"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить свою печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Возвращена печать по умолчанию"); }}>Вернуть печать по умолчанию</button>}</div>
+          </div>
         </aside>
         <section className="panel previewPanel"><div className="previewHeader"><div><h2>Предпросмотр таблицы</h2><p>{rows.length} строк · {columns} столбцов</p></div><span className="editable">Можно редактировать</span></div><div className="tableWrap"><table><tbody>{rows.map((row, ri) => <tr key={ri}>{Array.from({ length: columns }, (_, ci) => <td key={ci} className={ri === 0 ? "headingCell" : ""}><input aria-label={`Строка ${ri + 1}, столбец ${ci + 1}`} value={String(row[ci] ?? "")} onChange={(e) => updateCell(ri, ci, e.target.value)} /></td>)}</tr>)}</tbody></table></div><div className="tableActions"><button className="textButton" onClick={() => setRows((r) => [...r, Array(columns).fill("")])}>+ Добавить строку</button><button className="textButton danger" disabled={rows.length <= 1} onClick={() => setRows((r) => r.slice(0, -1))}>Удалить последнюю</button></div></section>
       </div>
