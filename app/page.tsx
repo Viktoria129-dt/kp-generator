@@ -109,15 +109,15 @@ function signatureWithCenteredStamp(left: string, right: string) {
 }
 
 export default function Home() {
-  const [number, setNumber] = useState("125-1/1");
+  const [number, setNumber] = useState("");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [city, setCity] = useState("г. Москва");
-  const [title, setTitle] = useState("КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ");
+  const [city, setCity] = useState("");
+  const [title, setTitle] = useState("");
   const [includeObject, setIncludeObject] = useState(false);
   const [objectName, setObjectName] = useState("");
-  const [delivery, setDelivery] = useState("Доставка до города Омск входит в стоимость светильников и осуществляется Поставщиком.");
-  const [directorTitle, setDirectorTitle] = useState("Генеральный директор");
-  const [directorName, setDirectorName] = useState("Матыцин А. Ю.");
+  const [delivery, setDelivery] = useState("");
+  const [directorTitle, setDirectorTitle] = useState("");
+  const [directorName, setDirectorName] = useState("");
   const [stamp, setStamp] = useState<File | null>(null);
   const [rows, setRows] = useState<Cell[][]>(sample);
   const [template, setTemplate] = useState<File | null>(null);
@@ -153,22 +153,28 @@ export default function Home() {
 
   async function generateDocument() {
     try {
+      if (!template) {
+        window.alert("Сначала загрузите бланк Word");
+        return;
+      }
       setStatus("Формируем документ…");
-      const templateBuffer = template ? await template.arrayBuffer() : await fetch("/kp-template.docx").then((response) => { if (!response.ok) throw new Error("Не удалось загрузить встроенный бланк"); return response.arrayBuffer(); });
+      const templateBuffer = await template.arrayBuffer();
       const zip = new PizZip(templateBuffer);
-      const stampBuffer = stamp ? await imageToPng(stamp) : await fetch("/stamp.png").then((response) => { if (!response.ok) throw new Error("Не удалось загрузить печать"); return response.arrayBuffer(); });
-      zip.file("word/media/stamp.png", stampBuffer);
-      const relsFile = zip.file("word/_rels/document.xml.rels");
-      if (!relsFile) throw new Error("В бланке не найдены связи документа");
-      const rels = relsFile.asText();
-      if (!rels.includes('Id="rIdStamp"')) zip.file("word/_rels/document.xml.rels", rels.replace("</Relationships>", '<Relationship Id="rIdStamp" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/stamp.png"/></Relationships>'));
-      const typesFile = zip.file("[Content_Types].xml");
-      if (typesFile) { const types = typesFile.asText(); if (!types.includes('Extension="png"')) zip.file("[Content_Types].xml", types.replace("</Types>", '<Default Extension="png" ContentType="image/png"/></Types>')); }
+      if (stamp) {
+        const stampBuffer = await imageToPng(stamp);
+        zip.file("word/media/stamp.png", stampBuffer);
+        const relsFile = zip.file("word/_rels/document.xml.rels");
+        if (!relsFile) throw new Error("В бланке не найдены связи документа");
+        const rels = relsFile.asText();
+        if (!rels.includes('Id="rIdStamp"')) zip.file("word/_rels/document.xml.rels", rels.replace("</Relationships>", '<Relationship Id="rIdStamp" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/stamp.png"/></Relationships>'));
+        const typesFile = zip.file("[Content_Types].xml");
+        if (typesFile) { const types = typesFile.asText(); if (!types.includes('Extension="png"')) zip.file("[Content_Types].xml", types.replace("</Types>", '<Default Extension="png" ContentType="image/png"/></Types>')); }
+      }
       const documentFile = zip.file("word/document.xml"); if (!documentFile) throw new Error("В бланке не найден документ Word");
       let original = documentFile.asText();
       if (!original.includes("xmlns:a=")) original = original.replace("<w:document ", '<w:document xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" ');
       const section = original.match(/<w:sectPr[\s\S]*?<\/w:sectPr>/)?.[0]; if (!section) throw new Error("В бланке отсутствуют параметры страницы");
-      const content = [alignedLine(`Исх. №${number} от ${formattedDate} года`, city, { after: 260 }), paragraph(title, { bold: true, center: true, size: 22, after: includeObject && objectName.trim() ? 140 : 260 }), ...(includeObject && objectName.trim() ? [paragraph(`Объект: ${objectName.trim()}`, { after: 220 })] : []), tableXml(rows), paragraph("", { after: 180 }), paragraph(calculation.totalText, { bold: true, after: 320 }), paragraph(delivery, { after: 0 }), signatureWithCenteredStamp(directorTitle, directorName)].join("");
+      const content = [alignedLine(`Исх. №${number} от ${formattedDate} года`, city, { after: 260 }), paragraph(title, { bold: true, center: true, size: 22, after: includeObject && objectName.trim() ? 140 : 260 }), ...(includeObject && objectName.trim() ? [paragraph(`Объект: ${objectName.trim()}`, { after: 220 })] : []), tableXml(rows), paragraph("", { after: 180 }), paragraph(calculation.totalText, { bold: true, after: 320 }), paragraph(delivery, { after: 0 }), stamp ? signatureWithCenteredStamp(directorTitle, directorName) : alignedLine(directorTitle, directorName, { before: 2400, after: 0 })].join("");
       zip.file("word/document.xml", original.replace(/<w:body>[\s\S]*?<\/w:body>/, `<w:body>${content}${section}</w:body>`));
       const blob = zip.generate({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `КП_исх_${number.replaceAll("/", "-")}_${formattedDate}.docx`; link.click(); URL.revokeObjectURL(url);
@@ -184,7 +190,7 @@ export default function Home() {
         <aside className="panel controls">
           <div className="step"><span>1</span><div><h2>Бланк</h2></div></div>
           <input ref={templateInput} hidden type="file" accept=".docx" onChange={(e) => { setTemplate(e.target.files?.[0] ?? null); setStatus(e.target.files?.[0] ? `Бланк выбран: ${e.target.files[0].name}` : ""); }} />
-          <div className="buttonRow"><button className="secondary" onClick={() => templateInput.current?.click()}>{template ? "Заменить выбранный бланк" : "Загрузить другой бланк"}</button>{template && <button className="textButton" onClick={() => setTemplate(null)}>Вернуть фирменный бланк</button>}</div>
+          <div className="buttonRow"><button className="secondary" onClick={() => templateInput.current?.click()}>{template ? "Заменить бланк" : "Загрузить бланк"}</button>{template && <button className="textButton" onClick={() => { setTemplate(null); if (templateInput.current) templateInput.current.value = ""; }}>Удалить бланк</button>}</div>
           <div className="divider" /><div className="step"><span>2</span><div><h2>Реквизиты</h2></div></div>
           <label>Исходящий номер<input value={number} onChange={(e) => setNumber(e.target.value)} /></label><div className="twoCols"><label>Дата<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label><label>Город<input value={city} onChange={(e) => setCity(e.target.value)} /></label></div><label>Заголовок<input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className="checkRow"><input type="checkbox" checked={includeObject} onChange={(e) => setIncludeObject(e.target.checked)} /><span>Добавить название объекта</span></label>
@@ -198,9 +204,9 @@ export default function Home() {
           <div className="divider" />
           <div className="stampSection">
             <div className="step"><span>5</span><div><h2>Печать</h2></div></div>
-            <div className="stampCard"><div><strong>{stamp ? stamp.name : "Стандартная печать"}</strong><span>{stamp ? "Своя печать выбрана" : "Используется печать по умолчанию"}</span></div></div>
+            <div className="stampCard"><div><strong>{stamp ? stamp.name : "Печать не загружена"}</strong><span>{stamp ? "Печать будет добавлена в документ" : "Документ сформируется без печати"}</span></div></div>
           <input ref={stampInput} hidden type="file" accept="image/png,image/jpeg" onChange={(e) => { const file = e.target.files?.[0] ?? null; setStamp(file); setStatus(file ? `Печать выбрана: ${file.name}` : ""); }} />
-          <div className="buttonRow"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить свою печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Возвращена печать по умолчанию"); }}>Вернуть печать по умолчанию</button>}</div>
+          <div className="buttonRow"><button className="secondary" onClick={() => stampInput.current?.click()}>{stamp ? "Заменить печать" : "Загрузить печать"}</button>{stamp && <button className="textButton" onClick={() => { setStamp(null); if (stampInput.current) stampInput.current.value = ""; setStatus("Печать удалена"); }}>Удалить печать</button>}</div>
           </div>
         </aside>
         <section className="panel previewPanel"><div className="previewHeader"><div><h2>Предпросмотр таблицы</h2><p>{rows.length} строк · {columns} столбцов</p></div><span className="editable">Можно редактировать</span></div><div className="tableWrap"><table><tbody>{rows.map((row, ri) => <tr key={ri}>{Array.from({ length: columns }, (_, ci) => <td key={ci} className={ri === 0 ? "headingCell" : ""}><input aria-label={`Строка ${ri + 1}, столбец ${ci + 1}`} value={String(row[ci] ?? "")} onChange={(e) => updateCell(ri, ci, e.target.value)} /></td>)}</tr>)}</tbody></table></div></section>
