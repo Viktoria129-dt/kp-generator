@@ -178,9 +178,8 @@ export default function Home() {
 
   const columns = Math.max(...rows.map((row) => row.length), 1);
   return <main>
-    <header className="topbar"><div className="brandMark">КП</div><div><strong>Генератор коммерческих предложений</strong><span>ООО «МосЭнергоСервис»</span></div><div className="privacy">Данные остаются на компьютере</div></header>
     <section className="workspace">
-      <div className="intro"><div><p className="eyebrow">Новый документ</p><h1>Соберите КП за пару минут</h1><p>Заполните реквизиты, добавьте таблицу и скачайте готовый Word с фирменной шапкой и подвалом.</p></div><button className="primary" onClick={generateDocument}>Сформировать Word</button></div>
+      <div className="intro"><div><h1>Соберите КП за пару минут</h1><p>Заполните реквизиты, добавьте таблицу и скачайте готовый Word с фирменной шапкой и подвалом.</p></div><button className="primary" onClick={generateDocument}>Сформировать Word</button></div>
       <div className="grid">
         <aside className="panel controls">
           <div className="step"><span>1</span><div><h2>Бланк</h2><p>По умолчанию используется фирменный бланк из примера.</p></div></div>
