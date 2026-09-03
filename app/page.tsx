@@ -63,11 +63,12 @@ async function imageToPng(file: File): Promise<ArrayBuffer> {
       image.src = url;
     });
     const canvas = document.createElement("canvas");
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
+    const side = Math.max(image.naturalWidth, image.naturalHeight);
+    canvas.width = side;
+    canvas.height = side;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Не удалось подготовить изображение печати");
-    context.drawImage(image, 0, 0);
+    context.drawImage(image, (side - image.naturalWidth) / 2, (side - image.naturalHeight) / 2);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("Не удалось преобразовать печать в PNG");
     return blob.arrayBuffer();
@@ -104,7 +105,7 @@ function alignedLine(left: string, right: string, options: { bold?: boolean; bef
 
 function signatureWithCenteredStamp(left: string, right: string) {
   const raisedText = '<w:b/><w:position w:val="170"/><w:sz w:val="22"/><w:szCs w:val="22"/>';
-  const drawing = `<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="2221200" cy="2087300"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="999" name="Печать"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="stamp.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdStamp"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2221200" cy="2087300"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
+  const drawing = `<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="1440000" cy="1440000"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="999" name="Печать 4 см"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="stamp.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdStamp"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1440000" cy="1440000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
   return `<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="3300"/><w:tab w:val="right" w:pos="9360"/></w:tabs><w:spacing w:before="2400" w:after="0"/></w:pPr><w:r><w:rPr>${raisedText}</w:rPr><w:t xml:space="preserve">${xmlEscape(left)}</w:t></w:r><w:r><w:tab/></w:r><w:r>${drawing}</w:r><w:r><w:tab/></w:r><w:r><w:rPr>${raisedText}</w:rPr><w:t xml:space="preserve">${xmlEscape(right)}</w:t></w:r></w:p>`;
 }
 
